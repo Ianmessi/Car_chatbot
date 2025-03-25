@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Car Troubleshooting Chatbot - Get instant help with your car problems">
+    <title>Car Troubleshooting Assistant</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <div class="header-content">
+                <i class="fas fa-car"></i>
+                <h1>Car Troubleshooting Assistant</h1>
+            </div>
+            <p class="subtitle">Get instant help with your car problems</p>
+        </header>
+
+        <main class="chat-container">
+            <div class="chat-box" id="chat-box">
+                <div class="bot-message">
+                    <div class="message-content">
+                        <i class="fas fa-robot"></i>
+                        <p>Hello! I'm your car troubleshooting assistant. I can help you diagnose common car problems. Please describe your car's issue, and I'll provide possible causes and solutions.</p>
+                    </div>
+                </div>
+            </div>
+            <form id="chat-form" class="chat-form">
+                <input type="text" id="user-input" placeholder="Describe your car issue..." required>
+                <button type="submit">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </form>
+        </main>
+
+        <footer class="app-footer">
+            <p>Powered by AI • Always consult a professional mechanic for serious issues</p>
+        </footer>
+    </div>
+
+    <script>
+        document.getElementById('chat-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const userInput = document.getElementById('user-input').value;
+            if (!userInput.trim()) return;
+
+            const chatBox = document.getElementById('chat-box');
+            const userMessage = document.createElement('div');
+            userMessage.classList.add('user-message');
+            userMessage.innerHTML = `
+                <div class="message-content">
+                    <i class="fas fa-user"></i>
+                    <p>${userInput}</p>
+                </div>
+            `;
+            chatBox.appendChild(userMessage);
+
+            // Show typing indicator
+            const typingIndicator = document.createElement('div');
+            typingIndicator.classList.add('bot-message', 'typing-indicator');
+            typingIndicator.innerHTML = `
+                <div class="message-content">
+                    <i class="fas fa-robot"></i>
+                    <div class="typing-dots">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </div>
+            `;
+            chatBox.appendChild(typingIndicator);
+
+            fetch('/get_response', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `user_input=${encodeURIComponent(userInput)}`
+            })
+            .then(response => response.text())
+            .then(data => {
+                // Remove typing indicator
+                typingIndicator.remove();
+                
+                const botMessage = document.createElement('div');
+                botMessage.classList.add('bot-message');
+                botMessage.innerHTML = `
+                    <div class="message-content">
+                        <i class="fas fa-robot"></i>
+                        <p>${data}</p>
+                    </div>
+                `;
+                chatBox.appendChild(botMessage);
+                document.getElementById('user-input').value = '';
+                chatBox.scrollTop = chatBox.scrollHeight;
+            })
+            .catch(error => {
+                typingIndicator.remove();
+                const errorMessage = document.createElement('div');
+                errorMessage.classList.add('bot-message', 'error-message');
+                errorMessage.innerHTML = `
+                    <div class="message-content">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <p>Sorry, I encountered an error. Please try again.</p>
+                    </div>
+                `;
+                chatBox.appendChild(errorMessage);
+            });
+        });
+
+        // Auto-scroll to bottom when new messages are added
+        const chatBox = document.getElementById('chat-box');
+        const observer = new MutationObserver(() => {
+            chatBox.scrollTop = chatBox.scrollHeight;
+        });
+        observer.observe(chatBox, { childList: true, subtree: true });
+    </script>
+</body>
+</html>
+
+
